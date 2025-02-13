@@ -1,6 +1,6 @@
 import pickle
-import math
 
+# https://en.wikipedia.org/wiki/Jaccard_index
 def jaccard(setA, setB):
     if not setA and not setB:
         return 1.0  # if both are empty, treat as identical in that dimension
@@ -35,10 +35,16 @@ def compute_similarity(movieA_id, movieB_id, movie_profiles, global_stats):
     adult_sim = 1.0 if A["adult"] == B["adult"] else 0.0
     orig_lang_sim = 1.0 if A["original_language"] == B["original_language"] else 0.0
 
-    # Example weighting
-    w_pop, w_rev, w_run, w_vote, w_year = 1.0, 1.0, 0.5, 1.0, 0.5
-    w_genre, w_lang, w_pc = 2.0, 1.0, 1.0
-    w_adult, w_o_lang = 0.5, 0.5
+    w_pop = 1.0
+    w_rev= 1.0
+    w_run= 0.5
+    w_vote = 1.0
+    w_year = 0.5
+    w_genre, w_lang, w_pc = 2.0
+    w_lang = 1.0
+    w_pc = 1.0
+    w_adult, w_o_lang = 0.5
+    w_o_lang = 0.5
 
     sim = (
         w_pop * pop_sim +
@@ -62,7 +68,7 @@ def get_liked_movies(user_id, user_ratings):
     if user_id not in user_ratings:
         return likes
     for m_id, (rating_value, _) in user_ratings[user_id].items():
-        if rating_value >= 4:  # threshold for "liked"
+        if rating_value >= 4:
             likes.add(m_id)
     return likes
 
@@ -135,3 +141,41 @@ def fallback_top_popular(movie_profiles, top_n=20, candidates=None):
     pop_scored = [(m_id, movie_profiles[m_id]["popularity"]) for m_id in candidates]
     pop_scored.sort(key=lambda x: x[1], reverse=True)
     return pop_scored[:top_n]
+
+def inspect_movie(movie_id, artifacts):
+    """
+    For sanity checking:
+      - Prints the specified movie's profile (all fields).
+      - Then prints all movies in the model (with their profiles)
+        ordered by similarity to the specified movie (including the movie itself).
+    """
+    movie_profiles = artifacts["movie_profiles"]
+    global_stats = artifacts["global_stats"]
+
+    if movie_id not in movie_profiles:
+        print(f"Movie id '{movie_id}' not found in the model.")
+        return
+
+    # Print specified movie's profile.
+    target_profile = movie_profiles[movie_id]
+    print("=== Specified Movie Profile ===")
+    print(f"Movie ID: {movie_id}")
+    for key, value in target_profile.items():
+        print(f"  {key}: {value}")
+    print("=" * 40)
+
+    # Compute similarity of every movie to the specified movie.
+    similarities = []
+    for mid, profile in movie_profiles.items():
+        sim = compute_similarity(movie_id, mid, movie_profiles, global_stats)
+        similarities.append((mid, sim, profile))
+
+    # Sort by similarity descending (so the specified movie should be first with sim=1.0).
+    similarities.sort(key=lambda x: x[1], reverse=True)
+
+    print("\n=== All Movies Sorted by Similarity to Specified Movie ===")
+    for mid, sim, profile in similarities:
+        print(f"Movie ID: {mid} (Similarity: {sim:.3f})")
+        for key, value in profile.items():
+            print(f"  {key}: {value}")
+        print("-" * 40)
