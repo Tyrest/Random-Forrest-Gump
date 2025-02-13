@@ -1,0 +1,369 @@
+{
+  "nbformat": 4,
+  "nbformat_minor": 0,
+  "metadata": {
+    "colab": {
+      "provenance": []
+    },
+    "kernelspec": {
+      "name": "python3",
+      "display_name": "Python 3"
+    },
+    "language_info": {
+      "name": "python"
+    }
+  },
+  "cells": [
+    {
+      "cell_type": "code",
+      "execution_count": 1,
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "IWlFLALMlByO",
+        "outputId": "19e23198-3dd9-439a-89b6-791868d057cd"
+      },
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Collecting scikit-surprise\n",
+            "  Downloading scikit_surprise-1.1.4.tar.gz (154 kB)\n",
+            "\u001b[?25l     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m0.0/154.4 kB\u001b[0m \u001b[31m?\u001b[0m eta \u001b[36m-:--:--\u001b[0m\r\u001b[2K     \u001b[91m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m\u001b[91m╸\u001b[0m \u001b[32m153.6/154.4 kB\u001b[0m \u001b[31m5.2 MB/s\u001b[0m eta \u001b[36m0:00:01\u001b[0m\r\u001b[2K     \u001b[90m━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\u001b[0m \u001b[32m154.4/154.4 kB\u001b[0m \u001b[31m3.1 MB/s\u001b[0m eta \u001b[36m0:00:00\u001b[0m\n",
+            "\u001b[?25h  Installing build dependencies ... \u001b[?25l\u001b[?25hdone\n",
+            "  Getting requirements to build wheel ... \u001b[?25l\u001b[?25hdone\n",
+            "  Preparing metadata (pyproject.toml) ... \u001b[?25l\u001b[?25hdone\n",
+            "Requirement already satisfied: joblib>=1.2.0 in /usr/local/lib/python3.11/dist-packages (from scikit-surprise) (1.4.2)\n",
+            "Requirement already satisfied: numpy>=1.19.5 in /usr/local/lib/python3.11/dist-packages (from scikit-surprise) (1.26.4)\n",
+            "Requirement already satisfied: scipy>=1.6.0 in /usr/local/lib/python3.11/dist-packages (from scikit-surprise) (1.13.1)\n",
+            "Building wheels for collected packages: scikit-surprise\n",
+            "  Building wheel for scikit-surprise (pyproject.toml) ... \u001b[?25l\u001b[?25hdone\n",
+            "  Created wheel for scikit-surprise: filename=scikit_surprise-1.1.4-cp311-cp311-linux_x86_64.whl size=2505168 sha256=683ad96c133190b084d9afcc1b81d0f03f8646a3ad5d072c57ffce91bb1ce686\n",
+            "  Stored in directory: /root/.cache/pip/wheels/2a/8f/6e/7e2899163e2d85d8266daab4aa1cdabec7a6c56f83c015b5af\n",
+            "Successfully built scikit-surprise\n",
+            "Installing collected packages: scikit-surprise\n",
+            "Successfully installed scikit-surprise-1.1.4\n"
+          ]
+        }
+      ],
+      "source": [
+        "# import re\n",
+        "# import numpy as np\n",
+        "# import pandas as pd\n",
+        "# from math import sqrt\n",
+        "# from sklearn.metrics.pairwise import cosine_similarity\n",
+        "# from sklearn.metrics import mean_squared_error\n",
+        "# from sklearn.model_selection import train_test_split\n",
+        "%pip install scikit-surprise\n",
+        "import re\n",
+        "import pandas as pd\n",
+        "from surprise import Dataset, Reader, KNNWithMeans, accuracy\n",
+        "from surprise.model_selection import train_test_split\n",
+        "\n"
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "from google.colab import drive\n",
+        "drive.mount('/content/drive')"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "H05bfG2jmhLx",
+        "outputId": "6a5f3e18-c267-4f75-c1dd-82fa95a5c6a5"
+      },
+      "execution_count": 2,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Mounted at /content/drive\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def parse_log_file(file_path):\n",
+        "\n",
+        "    rating_events = []\n",
+        "\n",
+        "    rating_pattern = re.compile(r'GET /rate/([^=]+)=(\\d+)')\n",
+        "\n",
+        "    with open(file_path, 'r') as f:\n",
+        "        for line in f:\n",
+        "            line = line.strip()\n",
+        "            # Each line is expected to have 3 comma-separated parts\n",
+        "            parts = line.split(',')\n",
+        "            if len(parts) != 3:\n",
+        "                continue\n",
+        "            timestamp, user_id, request = parts\n",
+        "            user_id = user_id.strip()\n",
+        "\n",
+        "            # Check for rating event using regex\n",
+        "            rating_match = rating_pattern.search(request)\n",
+        "            if rating_match:\n",
+        "                movie_id = rating_match.group(1)\n",
+        "                rating = int(rating_match.group(2))\n",
+        "                rating_events.append({\n",
+        "                    'timestamp': timestamp,\n",
+        "                    'user_id': user_id,\n",
+        "                    'movie_id': movie_id,\n",
+        "                    'rating': rating\n",
+        "                })\n",
+        "            # Optionally, you can also handle watch events if you want to derive implicit feedback.\n",
+        "            # For now, we only use explicit rating events.\n",
+        "\n",
+        "    return pd.DataFrame(rating_events)"
+      ],
+      "metadata": {
+        "id": "_Uy7rs4lmQXq"
+      },
+      "execution_count": 3,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "# 1. Parse the Log File\n",
+        "log_file_path = '/content/drive/MyDrive/test_3.txt'\n",
+        "df = parse_log_file(log_file_path)\n",
+        "\n",
+        "reader = Reader(rating_scale=(1, 5))\n",
+        "\n",
+        "data = Dataset.load_from_df(df[['user_id', 'movie_id', 'rating']], reader)\n"
+      ],
+      "metadata": {
+        "id": "91ORImlFmT-f"
+      },
+      "execution_count": 4,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "#2. Split the Data\n",
+        "trainset, testset = train_test_split(data, test_size=0.2)"
+      ],
+      "metadata": {
+        "id": "pjX_OzxMmoxf"
+      },
+      "execution_count": 5,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "sim_options = {\n",
+        "    'name': 'cosine',\n",
+        "    'user_based': True\n",
+        "}"
+      ],
+      "metadata": {
+        "id": "0Fbin5ormqnS"
+      },
+      "execution_count": 6,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "algo = KNNWithMeans(sim_options=sim_options)\n",
+        "algo.fit(trainset)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "bfNnEKlLmz6G",
+        "outputId": "87eb05c4-073c-434f-8fca-d36635da2528"
+      },
+      "execution_count": 7,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Computing the cosine similarity matrix...\n",
+            "Done computing similarity matrix.\n"
+          ]
+        },
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "<surprise.prediction_algorithms.knns.KNNWithMeans at 0x7c793e2b4110>"
+            ]
+          },
+          "metadata": {},
+          "execution_count": 7
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def get_top_n(predictions, n=20):\n",
+        "\n",
+        "    # Create a dictionary of predictions for each user\n",
+        "    top_n = {}\n",
+        "\n",
+        "    for uid, iid, true_r, est, _ in predictions:\n",
+        "        if uid not in top_n:\n",
+        "            top_n[uid] = []\n",
+        "        top_n[uid].append((iid, est))\n",
+        "\n",
+        "    # Sort the predictions\n",
+        "    for uid, user_ratings in top_n.items():\n",
+        "        user_ratings.sort(key=lambda x: x[1], reverse=True)\n",
+        "        top_n[uid] = user_ratings[:n]\n",
+        "\n",
+        "    return top_n"
+      ],
+      "metadata": {
+        "id": "YIeiZbYmznGq"
+      },
+      "execution_count": 8,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "predictions = algo.test(testset)\n",
+        "\n",
+        "# Compute RMSE\n",
+        "rmse = accuracy.rmse(predictions)\n",
+        "print(f\"RMSE: {rmse}\")\n",
+        "\n",
+        "# Compute MAE\n",
+        "mae = accuracy.mae(predictions)\n",
+        "print(f\"MAE: {mae}\")"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "VMVPWCkm0c7f",
+        "outputId": "97596afb-76b7-4344-e847-18e552dd37f3"
+      },
+      "execution_count": 9,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "RMSE: 0.9502\n",
+            "RMSE: 0.9501804978065709\n",
+            "MAE:  0.7977\n",
+            "MAE: 0.797650155964797\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "def get_top_20_recommendations_for_user(user_id):\n",
+        "    all_movie_ids = set(df['movie_id'].unique())\n",
+        "\n",
+        "    # Get the list of movies that the user has already rated\n",
+        "    rated_movies = set(df[df['user_id'] == user_id]['movie_id'])\n",
+        "\n",
+        "    # Get the list of unrated movies for this user\n",
+        "    unrated_movies = all_movie_ids - rated_movies\n",
+        "\n",
+        "    # Generate predictions for all unrated movies\n",
+        "    predictions = []\n",
+        "    for movie_id in unrated_movies:\n",
+        "        prediction = algo.predict(user_id, movie_id)\n",
+        "        predictions.append((movie_id, prediction.est))\n",
+        "\n",
+        "    # Sort the predictions\n",
+        "    predictions.sort(key=lambda x: x[1], reverse = True)\n",
+        "\n",
+        "    top_20 = predictions[:20]\n",
+        "\n",
+        "    # Get the top 20 movie IDs\n",
+        "    top_20_movie_ids = [str(movie_id) for movie_id, _ in top_20]\n",
+        "    top_20_movie_ids_output = \",\".join(top_20_movie_ids)\n",
+        "\n",
+        "    top_20_with_ratings = [f\"{movie_id}: {rating:.2f}\" for movie_id, rating in top_20]\n",
+        "    top_20_with_ratings_output = \",\".join(top_20_with_ratings)\n",
+        "\n",
+        "    return top_20_movie_ids_output, top_20_with_ratings_output"
+      ],
+      "metadata": {
+        "id": "PKAQrwmc0WSy"
+      },
+      "execution_count": 23,
+      "outputs": []
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "user_id = '85304'  # The user ID for whom we want the recommendations\n",
+        "top_20_movie_ids, top_20_with_ratings = get_top_20_recommendations_for_user(user_id)\n",
+        "\n",
+        "print(f\"Top 20 recommended movies for user {user_id}:\")\n",
+        "print(top_20_movie_ids)\n",
+        "print(top_20_with_ratings)"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/"
+        },
+        "id": "b8UGghaJ0bW3",
+        "outputId": "35aa8ac3-40f5-41c6-8b28-20f1ce5b9366"
+      },
+      "execution_count": 24,
+      "outputs": [
+        {
+          "output_type": "stream",
+          "name": "stdout",
+          "text": [
+            "Top 20 recommended movies for user 85304:\n",
+            "the-silence-of-the-lambs+1991,the-lord-of-the-rings+2001,saving-private-ryan+1998,titanic+1997,django-unchained+2012,schindler’s-list+1993,the-wolf-of-wall-street+2013,forrest-gump+1994,the-batman+2022,joker+2019,pulp-fiction+1994,gladiator+2000\n",
+            "the-silence-of-the-lambs+1991: 4.96,the-lord-of-the-rings+2001: 4.62,saving-private-ryan+1998: 4.53,titanic+1997: 4.53,django-unchained+2012: 4.53,schindler’s-list+1993: 4.53,the-wolf-of-wall-street+2013: 4.53,forrest-gump+1994: 4.53,the-batman+2022: 4.53,joker+2019: 4.53,pulp-fiction+1994: 4.50,gladiator+2000: 4.47\n"
+          ]
+        }
+      ]
+    },
+    {
+      "cell_type": "code",
+      "source": [
+        "df['user_id'][0]"
+      ],
+      "metadata": {
+        "colab": {
+          "base_uri": "https://localhost:8080/",
+          "height": 34
+        },
+        "id": "R1w7-1xEzsE9",
+        "outputId": "e297bb4c-7dea-4d8e-f0c2-180165aa378c"
+      },
+      "execution_count": 12,
+      "outputs": [
+        {
+          "output_type": "execute_result",
+          "data": {
+            "text/plain": [
+              "'85304'"
+            ],
+            "application/vnd.google.colaboratory.intrinsic+json": {
+              "type": "string"
+            }
+          },
+          "metadata": {},
+          "execution_count": 12
+        }
+      ]
+    }
+  ]
+}
