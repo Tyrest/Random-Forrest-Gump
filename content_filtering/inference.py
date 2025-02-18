@@ -40,10 +40,13 @@ def compute_similarity(movieA_id, movieB_id, movie_profiles, global_stats):
     w_run= 0.5
     w_vote = 1.0
     w_year = 0.5
-    w_genre, w_lang, w_pc = 2.0
+    w_genre = 2.0
+    w_lang = 2.0
+    w_pc = 2.0
     w_lang = 1.0
     w_pc = 1.0
-    w_adult, w_o_lang = 0.5
+    w_adult = 0.5
+    w_o_lang = 0.5
     w_o_lang = 0.5
 
     sim = (
