@@ -10,7 +10,6 @@ def parse_date_to_year(date_str):
 
 def build_movie_profile(movie_details):
     return {
-        # Convert string boolean to int (0 or 1)
         "adult": 1 if str(movie_details.get("adult")).lower() == "true" else 0,
         "genres": set(g["id"] for g in movie_details.get("genres", [])),
         "original_language": movie_details.get("original_language", None),
@@ -51,7 +50,7 @@ def train_model(movie_play_file, rating_file, model_artifact_path="recommender.p
         user_id = row["user_id"]
         movie_id = row["movieid"]
         rating_value = float(row["rating"])
-        rating_ts = row["raw"]  # Adjust if you have a dedicated timestamp field
+        rating_ts = row["raw"]
         if movie_id not in user_ratings[user_id]:
             user_ratings[user_id][movie_id] = (rating_value, rating_ts)
         else:
