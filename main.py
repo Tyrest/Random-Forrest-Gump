@@ -1,9 +1,9 @@
-import time
-from fastapi import FastAPI
-import uvicorn
 import requests
+import uvicorn
+from fastapi import FastAPI
 
 app = FastAPI()
+
 
 def get_recommendations(userid: str):
     """
@@ -15,6 +15,7 @@ def get_recommendations(userid: str):
     data = response.json()
     return data["recommendations"]
 
+
 @app.get("/recommend/{userid}")
 def recommend(userid: str):
     """
@@ -24,6 +25,7 @@ def recommend(userid: str):
     recommended_movie_ids = get_recommendations(userid)
     response_str = ",".join(map(str, recommended_movie_ids))
     return response_str
+
 
 if __name__ == "__main__":
     # It proxies recommendation requests to the local PyTorch model on port 8083.
