@@ -1,29 +1,35 @@
+import logging
+
 import requests
 import uvicorn
 from fastapi import FastAPI
 
+logger = logging.getLogger("uvicorn.error")
+logger.setLevel(logging.DEBUG)
+
 app = FastAPI()
 
 
-def get_recommendations(userid: str):
+def get_recommendations(user_id: str):
     """
     Calls the local model service API (model_api.py) to get recommendations
-    for the given userid. Returns a list of movie IDs.
+    for the given user_id. Returns a list of movie IDs.
     """
-    url = f"http://127.0.0.1:8083/recommend/{userid}"
+    url = f"http://127.0.0.1:8083/recommend/{user_id}"
     response = requests.get(url)
     data = response.json()
     return data["recommendations"]
 
 
-@app.get("/recommend/{userid}")
-def recommend(userid: str):
+@app.get("/recommend/{user_id}")
+def recommend(user_id: str):
     """
     Respond with a single-line comma-separated list of up to 20 movie IDs,
     from highest to lowest recommendation.
     """
-    recommended_movie_ids = get_recommendations(userid)
+    recommended_movie_ids = get_recommendations(user_id)
     response_str = ",".join(map(str, recommended_movie_ids))
+    logger.debug(f"Recommendations for user {user_id}: {response_str}")
     return response_str
 
 

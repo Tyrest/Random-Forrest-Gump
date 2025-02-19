@@ -9,12 +9,13 @@ app = FastAPI()
 model = CollaborativeFiltering.load("models/collaborative_filtering.pkl")
 
 
-@app.get("/recommend/{userid}")
-def recommend(userid: int):
+@app.get("/recommend/{user_id}")
+def recommend(user_id: int):
     """
     Retrieve recommendations from the loaded PyTorch model for the given userid.
     """
-    return {"recommendations": model.recommend(userid)}
+    recommendations = model.recommend(user_id)
+    return {"recommendations": [movie_id for movie_id, pred in recommendations]}
 
 
 if __name__ == "__main__":

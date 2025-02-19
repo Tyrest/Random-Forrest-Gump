@@ -72,8 +72,8 @@ class ContentFiltering(RecommendationModel):
 
         for user_id, movie_id, rating in testset:
             if user_id not in predictions:
-                scores = self._get_scores(user_id)
-                predictions[user_id] = {m_id: score for m_id, score in scores}
+                pred = self._get_predictions(user_id)
+                predictions[user_id] = {m_id: score for m_id, score in pred}
             rmses.append((predictions[user_id][movie_id] - rating) ** 2)
             maes.append(abs(predictions[user_id][movie_id] - rating))
 
@@ -82,7 +82,7 @@ class ContentFiltering(RecommendationModel):
         return rmse, mae
 
     def recommend(self, user_id, k=20):
-        predictions = self._get_scores(user_id)
+        predictions = self._get_predictions(user_id)
         return predictions[:k]
 
     def inspect_movie(self, movie_id):
@@ -221,7 +221,7 @@ class ContentFiltering(RecommendationModel):
         self.pop_scored.sort(key=lambda x: x[1], reverse=True)
         return self.pop_scored
 
-    def _get_scores(self, user_id):
+    def _get_predictions(self, user_id):
         all_movie_ids = set(self.movie_profiles.keys())
         if user_id not in self.user_watched:
             return self._fallback_top_popular(all_movie_ids)

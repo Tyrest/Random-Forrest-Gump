@@ -1,12 +1,17 @@
 import joblib
+import pandas as pd
 from surprise import KNNWithMeans, accuracy
 
 from recommendation_model import RecommendationModel
 
 
 class CollaborativeFiltering(RecommendationModel):
-    def __init__(self):
+    def __init__(self, movies_path, watched_path):
         super(CollaborativeFiltering, self).__init__()
+        self.movies_path = movies_path
+        self.watched_path = watched_path
+        self.movies_df = pd.read_json(self.movies_path)
+        self.watched_df = pd.read_json(self.watched_path)
         self.sim_options = {"name": "cosine", "user_based": True}
 
     def train(self, trainset):
@@ -22,34 +27,37 @@ class CollaborativeFiltering(RecommendationModel):
         return rmse, mae
 
     def recommend(self, user_id, k=20):
-        all_movie_ids = set(self.df["movie_id"].unique())
-        rated_movies = set(self.df[self.df["user_id"] == user_id]["movie_id"])
-        unrated_movies = all_movie_ids - rated_movies
+        all_movie_ids = set(self.movies_df["id"])
+        watched_movies = set(
+            self.watched_df[self.watched_df["userid"] == user_id]["movie_id"]
+        )
+        unwatched_movies = all_movie_ids - watched_movies
         predictions = []
-        for movie_id in unrated_movies:
+        for movie_id in unwatched_movies:
             pred = self.algo.predict(user_id, movie_id)
             predictions.append((movie_id, pred.est))
         predictions.sort(key=lambda x: x[1], reverse=True)
-        top_k = predictions[:k]
-        top_k_movie_ids = ",".join([str(movie_id) for movie_id, _ in top_k])
-        top_k_with_ratings = ",".join(
-            [f"{movie_id}: {rating:.2f}" for movie_id, rating in top_k]
-        )
-        return top_k_movie_ids, top_k_with_ratings
+        return predictions[:k]
 
     def save(self, model_path):
-        joblib.dump(self.algo, model_path)
+        joblib.dump(
+            {
+                "algo": self.algo,
+                "movies_path": self.movies_path,
+                "watched_path": self.watched_path,
+            },
+            model_path,
+        )
 
     @classmethod
     def load(cls, model_path):
-        algo = joblib.load(model_path)
-        cf = CollaborativeFiltering()
-        cf.algo = algo
+        data = joblib.load(model_path)
+        cf = CollaborativeFiltering(data["movies_path"], data["watched_path"])
+        cf.algo = data["algo"]
         return cf
 
 
 if __name__ == "__main__":
-    # Example usage:
     cf = CollaborativeFiltering("data/rating_events.json")
     rmse, mae = cf.evaluate()
     user_id = "85304"

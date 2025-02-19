@@ -14,9 +14,9 @@ def parse_rating_events(file_path):
             continue
         raw = event.get("raw", "")
         timestamp = raw.split(",")[0]  # Extract timestamp from raw
-        user_id = str(event.get("user_details", {}).get("user_id"))
-        movie_id = event.get("movieid")
-        rating = int(event.get("rating"))
+        user_id = event["user_details"]["user_id"]
+        movie_id = event["movieid"]
+        rating = int(event["rating"])
         rating_events.append(
             {
                 "timestamp": timestamp,
@@ -32,5 +32,7 @@ def load_ratings(rating_file_path, test_size=0.2):
     df = parse_rating_events(rating_file_path)
     reader = Reader(rating_scale=(1, 5))
     data = Dataset.load_from_df(df[["user_id", "movie_id", "rating"]], reader)
+    if test_size == 0:
+        return data.build_full_trainset(), None
     trainset, testset = train_test_split(data, test_size=test_size)
     return trainset, testset
