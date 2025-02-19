@@ -3,6 +3,9 @@ Machine Learning in Production - Random Forrest Gump's (Team 22) repo for the Mo
 
 ## How to Run
 
+### Downloading the Data
+Copy all the files from [the shared drive](https://drive.google.com/drive/folders/1Nie7EmPBg6DZPrO2nJaxMPY7rkQE2dQQ?usp=drive_link) to the `data` folder.
+
 ### Setting Up the Environment
 Create a virtual environment and install the required packages:
 ```bash
