@@ -55,13 +55,3 @@ class CollaborativeFiltering(RecommendationModel):
         cf = CollaborativeFiltering(data["movies_path"], data["watched_path"])
         cf.algo = data["algo"]
         return cf
-
-
-if __name__ == "__main__":
-    cf = CollaborativeFiltering("data/rating_events.json")
-    rmse, mae = cf.evaluate()
-    user_id = "85304"
-    movie_ids, movie_ratings = cf.recommend(user_id)
-    print(f"Top 20 recommended movies for user {user_id}:")
-    print(movie_ids)
-    print(movie_ratings)

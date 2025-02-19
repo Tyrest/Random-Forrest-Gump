@@ -10,7 +10,7 @@ logger.setLevel(logging.DEBUG)
 app = FastAPI()
 
 
-def get_recommendations(user_id: str):
+def get_recommendations(user_id: int):
     """
     Calls the local model service API (model_api.py) to get recommendations
     for the given user_id. Returns a list of movie IDs.
@@ -22,7 +22,7 @@ def get_recommendations(user_id: str):
 
 
 @app.get("/recommend/{user_id}")
-def recommend(user_id: str):
+def recommend(user_id: int):
     """
     Respond with a single-line comma-separated list of up to 20 movie IDs,
     from highest to lowest recommendation.
