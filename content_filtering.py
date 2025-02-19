@@ -41,7 +41,7 @@ class ContentFiltering(RecommendationModel):
 
         user_ratings = defaultdict(dict)
 
-        for user_id, movie_id, rating in trainset.build_anti_testset():
+        for user_id, movie_id, rating in trainset.build_testset():
             user_ratings[user_id][movie_id] = rating
 
         global_stats = {}
