@@ -1,5 +1,6 @@
 import argparse
 import pandas as pd
+
 from inference import load_model_artifacts, recommend_movies_to_user
 
 def evaluate_model(model_artifact_path, test_movie_play_file, test_rating_file):
@@ -22,7 +23,7 @@ def evaluate_model(model_artifact_path, test_movie_play_file, test_rating_file):
     for user_id, group in grouped:
         recommendations = recommend_movies_to_user(user_id, artifacts, top_n=20)
         recommended_ids = set(movie_id for movie_id, score in recommendations)
-        
+
         for idx, row in group.iterrows():
             movie_id = row["movieid"]
             rating = float(row["rating"])
@@ -47,6 +48,7 @@ def evaluate_model(model_artifact_path, test_movie_play_file, test_rating_file):
     print("True Negatives:  ", TN)
     print("False Negatives: ", FN)
     print("Overall Accuracy: {:.3f}".format(accuracy))
+
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(

@@ -1,12 +1,7 @@
 import sys
 import argparse
+from content_filtering import ContentFiltering
 
-from training import train_model
-from inference import (
-    load_model_artifacts,
-    recommend_movies_to_user,
-    inspect_movie
-)
 
 def main():
     parser = argparse.ArgumentParser()
@@ -40,15 +35,15 @@ def main():
         artifacts = load_model_artifacts(args.model_artifact)
         results = recommend_movies_to_user(args.user_id, artifacts, top_n=20)
         print(f"Recommendations for user {args.user_id}:")
-        for movie_id, score in results:
+        for movie_id, score in recommendations:
             print(f"  {movie_id}: {score:.3f}")
-
     elif args.mode == "inspect":
         if not args.movie_id:
             print("Must provide --movie_id for inspect mode.")
             sys.exit(1)
-        artifacts = load_model_artifacts(args.model_artifact)
-        inspect_movie(args.movie_id, artifacts)
+        model = ContentFiltering.load(args.model_artifact)
+        model.inspect_movie(args.movie_id)
+
 
 if __name__ == "__main__":
     main()
