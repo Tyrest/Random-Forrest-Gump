@@ -4,9 +4,10 @@ from collaborative_filtering import CollaborativeFiltering
 from content_filtering import ContentFiltering
 from utils import load_ratings
 
-RATING_EVENTS_PATH = "data/rating_events.json"
+# RATING_EVENTS_PATH = "data/rating_events.json"
+RATINGS_PATH = "data/ratings.csv"
 MOVIES_PATH = "data/movies.json"
-WATCHED_PATH = "data/watched.json"
+# WATCHED_PATH = "data/watched.json"
 COLLABORATIVE_FILTERING_PATH = "models/collaborative_filtering.pkl"
 CONTENT_FILTERING_PATH = "models/content_filtering.pkl"
 
@@ -14,13 +15,13 @@ if __name__ == "__main__":
     if not os.path.exists("models"):
         os.makedirs("models")
 
-    trainset, testset = load_ratings(RATING_EVENTS_PATH, test_size=0)
+    trainset, testset = load_ratings(RATINGS_PATH, test_size=0)
 
-    collaborative_filtering_model = CollaborativeFiltering(MOVIES_PATH, WATCHED_PATH)
+    collaborative_filtering_model = CollaborativeFiltering(RATINGS_PATH, MOVIES_PATH)
     collaborative_filtering_model.train(trainset)
     collaborative_filtering_model.save(COLLABORATIVE_FILTERING_PATH)
 
-    content_filtering_model = ContentFiltering(MOVIES_PATH, WATCHED_PATH)
+    content_filtering_model = ContentFiltering(RATINGS_PATH, MOVIES_PATH)
     content_filtering_model.train(trainset)
     content_filtering_model.save(CONTENT_FILTERING_PATH)
 
