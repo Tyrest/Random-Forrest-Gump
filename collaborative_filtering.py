@@ -6,12 +6,12 @@ from recommendation_model import RecommendationModel
 
 
 class CollaborativeFiltering(RecommendationModel):
-    def __init__(self, movies_path, watched_path):
+    def __init__(self, ratings_path, movies_path):
         super(CollaborativeFiltering, self).__init__()
+        self.ratings_path = ratings_path
         self.movies_path = movies_path
-        self.watched_path = watched_path
+        self.ratings_df = pd.read_csv(self.ratings_path)
         self.movies_df = pd.read_json(self.movies_path)
-        self.watched_df = pd.read_json(self.watched_path)
         self.sim_options = {"name": "cosine", "user_based": True}
 
     def train(self, trainset):
@@ -29,7 +29,7 @@ class CollaborativeFiltering(RecommendationModel):
     def recommend(self, user_id, k=20):
         all_movie_ids = set(self.movies_df["id"])
         watched_movies = set(
-            self.watched_df[self.watched_df["userid"] == user_id]["movie_id"]
+            self.ratings_df[self.ratings_df["userid"] == user_id]["movieid"]
         )
         unwatched_movies = all_movie_ids - watched_movies
         predictions = []
@@ -43,8 +43,8 @@ class CollaborativeFiltering(RecommendationModel):
         joblib.dump(
             {
                 "algo": self.algo,
+                "ratings_path": self.ratings_path,
                 "movies_path": self.movies_path,
-                "watched_path": self.watched_path,
             },
             model_path,
         )
@@ -52,6 +52,6 @@ class CollaborativeFiltering(RecommendationModel):
     @classmethod
     def load(cls, model_path):
         data = joblib.load(model_path)
-        cf = CollaborativeFiltering(data["movies_path"], data["watched_path"])
+        cf = CollaborativeFiltering(data["ratings_path"], data["movies_path"])
         cf.algo = data["algo"]
         return cf

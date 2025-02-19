@@ -17,9 +17,9 @@ NUMERIC_KEYS = [
 
 
 class ContentFiltering(RecommendationModel):
-    def __init__(self, movies_path, watched_path):
+    def __init__(self, ratings_path, movies_path):
+        self.ratings_path = ratings_path
         self.movies_path = movies_path
-        self.watched_path = watched_path
         self.pop_scored = None
 
     def train(self, trainset):
@@ -31,12 +31,12 @@ class ContentFiltering(RecommendationModel):
             if m_id not in movie_profiles:
                 movie_profiles[m_id] = ContentFiltering._build_movie_profile(row)
 
-        watched_df = pd.read_json(self.watched_path)
+        ratings_df = pd.read_csv(self.ratings_path)
         user_watched = defaultdict(set)
 
-        for _, row in watched_df.iterrows():
+        for _, row in ratings_df.iterrows():
             user_id = row["userid"]
-            m_id = row["movie_id"]
+            m_id = row["movieid"]
             user_watched[user_id].add(m_id)
 
         user_ratings = defaultdict(dict)

@@ -29,9 +29,10 @@ def parse_rating_events(file_path):
 
 
 def load_ratings(rating_file_path, test_size=0.2):
-    df = parse_rating_events(rating_file_path)
+    # df = parse_rating_events(rating_file_path)
+    df = pd.read_csv(rating_file_path)[:100000]
     reader = Reader(rating_scale=(1, 5))
-    data = Dataset.load_from_df(df[["user_id", "movie_id", "rating"]], reader)
+    data = Dataset.load_from_df(df[["userid", "movieid", "rating"]], reader)
     if test_size == 0:
         return data.build_full_trainset(), None
     trainset, testset = train_test_split(data, test_size=test_size)
