@@ -4,6 +4,7 @@ import pickle
 from collections import defaultdict
 
 import pandas as pd
+from rich.progress import track
 
 from recommendation_model import RecommendationModel
 
@@ -34,15 +35,16 @@ class ContentFiltering(RecommendationModel):
         ratings_df = pd.read_csv(self.ratings_path)
         user_watched = defaultdict(set)
 
-        for _, row in ratings_df.iterrows():
-            user_id = row["userid"]
-            m_id = row["movieid"]
-            user_watched[user_id].add(m_id)
+        # for _, row in ratings_df.iterrows():
+        #     user_id = row["userid"]
+        #     m_id = row["movieid"]
+        #     user_watched[user_id].add(m_id)
 
         user_ratings = defaultdict(dict)
 
         for user_id, movie_id, rating in trainset.build_testset():
             user_ratings[user_id][movie_id] = rating
+            user_watched[user_id].add(movie_id)
 
         global_stats = {}
 
@@ -70,7 +72,9 @@ class ContentFiltering(RecommendationModel):
         rmses = []
         maes = []
 
-        for user_id, movie_id, rating in testset:
+        for user_id, movie_id, rating in track(
+            testset, description="Evaluating...", total=len(testset)
+        ):
             if user_id not in predictions:
                 pred = self._get_predictions(user_id)
                 predictions[user_id] = {m_id: score for m_id, score in pred}
@@ -214,7 +218,7 @@ class ContentFiltering(RecommendationModel):
         if self.pop_scored:
             return self.pop_scored
         self.pop_scored = [
-            (m_id, math.log(self.movie_profiles[m_id]["popularity"]))
+            (m_id, math.log(self.movie_profiles[m_id]["popularity"] + 1))
             for m_id in candidates
         ]
         self._normalize_scores(self.pop_scored)
@@ -226,10 +230,10 @@ class ContentFiltering(RecommendationModel):
         if user_id not in self.user_watched:
             return self._fallback_top_popular(all_movie_ids)
         liked = self._get_liked_movies(user_id)
-        poor = self._get_poorly_rated_movies(user_id)
+        # poor = self._get_poorly_rated_movies(user_id)
         seen = self.user_watched[user_id]
-        seen_not_poor = seen - poor
-        reference_set = liked if liked else seen_not_poor
+        # seen_not_poor = seen - poor
+        reference_set = liked
         candidates = all_movie_ids - seen
         if not reference_set:
             return self._fallback_top_popular(candidates)
