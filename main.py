@@ -3,6 +3,7 @@ import logging
 import requests
 import uvicorn
 from fastapi import FastAPI
+from fastapi.responses import PlainTextResponse
 
 logger = logging.getLogger("uvicorn.error")
 logger.setLevel(logging.DEBUG)
@@ -30,7 +31,10 @@ def recommend(user_id: int):
     recommended_movie_ids = get_recommendations(user_id)
     response_str = ",".join(map(str, recommended_movie_ids))
     logger.debug(f"Recommendations for user {user_id}: {response_str}")
-    return response_str
+    return PlainTextResponse(
+        content=response_str,
+        media_type="text/plain",
+    )
 
 
 if __name__ == "__main__":
